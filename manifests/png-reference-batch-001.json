@@ -1,0 +1,21 @@
+{
+  "batch": "png-reference-batch-001",
+  "purpose": "First human-viewable PNG reference asset batch. Public reference only; not yet verified against a retail target build.",
+  "assets": [
+    {
+      "id": "eevee-switch-box-icon-reference",
+      "path": "assets/reference/pokesprite/switch-box-icons/eevee.png",
+      "kind": "graphic/png/reference",
+      "target": {"game": "Pokemon Lets Go Eevee", "region": "not established", "revision": "not established"},
+      "source": {
+        "repository": "msikma/pokesprite",
+        "path": "pokemon-gen8/regular/eevee.png",
+        "blob_sha": "76ba4e42dba52e01dcbf665848ed91738017b360"
+      },
+      "dimensions": "68x56",
+      "verification": "Unverified",
+      "rights_note": "PokéSprite is MIT-licensed as a project; its contributors document that raw sprite files were originally ripped by Zhorken and Kaphotics. Third-party Pokemon/game-image rights are not assumed to be granted by the project software license.",
+      "notes": "PokéSprite documents that the 68x56 box-sprite format began with Let's Go Pikachu/Eevee. This public PNG is retained as a Switch-era visual reference, not claimed as a target-build exact match."
+    }
+  ]
+}
