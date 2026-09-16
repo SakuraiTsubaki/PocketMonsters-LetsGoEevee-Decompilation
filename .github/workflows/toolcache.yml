@@ -28,19 +28,19 @@ jobs:
           echo '93a5d11a9ad510622acaaf908c556a7b9b764d338e78a7567f3689bf5081fd54  '"$D/ghidra.zip" | sha256sum -c -
           mkdir "$W/ghidra-unpack"; unzip -q "$D/ghidra.zip" -d "$W/ghidra-unpack"; cp -a "$(find "$W/ghidra-unpack" -mindepth 1 -maxdepth 1 -type d | head -n1)/." "$B/ghidra/"
           curl -fL --retry 3 'https://api.adoptium.net/v3/binary/latest/21/ga/linux/x64/jdk/hotspot/normal/eclipse' -o "$D/jdk.tar.gz"; tar -xzf "$D/jdk.tar.gz" -C "$B/jdk" --strip-components=1
-          curl -fL --retry 3 'https://git.eden-emu.dev/api/v1/repos/eden-ci/master/releases?limit=20' -o "$D/eden-releases.json"
+          curl -fL --retry 3 'https://git.eden-emu.dev/api/v1/repos/eden-ci/nightly/releases?limit=20' -o "$D/eden-releases.json"
           python3 - "$D/eden-releases.json" "$D/eden-selection.txt" <<'PY'
           import json, sys
           releases=json.load(open(sys.argv[1],encoding='utf-8'))
           for rel in releases:
               if rel.get('draft') or rel.get('prerelease'): continue
-              imgs=[a for a in (rel.get('assets') or []) if (a.get('name') or '').lower().endswith('.appimage') and any(x in (a.get('name') or '').lower() for x in ('amd64','x86_64'))]
+              imgs=[a for a in (rel.get('assets') or []) if (a.get('name') or '').lower().endswith('.appimage') and '-linux-' in (a.get('name') or '').lower() and '-amd64-' in (a.get('name') or '').lower()]
               if not imgs: continue
-              imgs.sort(key=lambda a:(0 if 'pgo' in (a.get('name') or '').lower() else 1,a.get('name') or ''))
+              imgs.sort(key=lambda a:(0 if 'clang-pgo' in (a.get('name') or '').lower() else 1,a.get('name') or ''))
               a=imgs[0]; url=a.get('browser_download_url') or a.get('download_url') or a.get('url')
               if url:
                   open(sys.argv[2],'w',encoding='utf-8').write(f"{rel.get('tag_name','unknown')}\t{a.get('name','eden.AppImage')}\t{url}\n"); break
-          else: raise SystemExit('no stable x86_64 Eden AppImage found')
+          else: raise SystemExit('no x86_64 Eden nightly AppImage found')
           PY
           IFS=$'\t' read -r EDEN_TAG EDEN_NAME EDEN_URL < "$D/eden-selection.txt"; curl -fL --retry 3 "$EDEN_URL" -o "$B/emulators/eden.AppImage"; chmod +x "$B/emulators/eden.AppImage"
           printf '#!/usr/bin/env bash\nD="$(cd "$(dirname "$0")/.." && pwd)"; export JAVA_HOME="$D/jdk"; exec "$D/ghidra/ghidraRun" "$@"\n' > "$B/bin/ghidraRun"
@@ -49,7 +49,7 @@ jobs:
           chmod +x "$B/bin/ghidraRun" "$B/bin/analyzeHeadless" "$B/bin/eden"
           printf '#!/usr/bin/env bash\n_D="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"; export JAVA_HOME="$_D/jdk"; export PATH="$_D/bin:$JAVA_HOME/bin:$PATH"; unset _D\n' > "$B/env.sh"; chmod +x "$B/env.sh"
           { echo platform=nintendo-switch; echo ghidra=12.1.3; echo "eden=$EDEN_TAG"; echo "eden_asset=$EDEN_NAME"; echo "hactool_commit=$(git -C "$S/hactool" rev-parse HEAD)"; "$B/jdk/bin/java" -version 2>&1 | head -n1 | sed 's/^/java=/'; sha256sum "$B/bin/hactool" "$B/emulators/eden.AppImage"; } > "$B/MANIFEST.txt"
-          printf '%s\n' 'hactool: https://github.com/SciresM/hactool' 'Ghidra: https://github.com/NationalSecurityAgency/ghidra' 'Temurin JDK 21: https://adoptium.net/' 'Eden: https://git.eden-emu.dev/eden-ci/master/releases' 'No ROMs, title keys, firmware, or proprietary game payloads are included.' > "$B/UPSTREAMS.txt"
+          printf '%s\n' 'hactool: https://github.com/SciresM/hactool' 'Ghidra: https://github.com/NationalSecurityAgency/ghidra' 'Temurin JDK 21: https://adoptium.net/' 'Eden nightly: https://git.eden-emu.dev/eden-ci/nightly/releases' 'No ROMs, title keys, firmware, or proprietary game payloads are included.' > "$B/UPSTREAMS.txt"
           tar -C "$B" -czf "$GITHUB_WORKSPACE/$ASSET" .; cd "$GITHUB_WORKSPACE"; sha256sum "$ASSET" > "$ASSET.sha256"
       - name: Publish durable toolcache release
         env: { GH_TOKEN: "${{ github.token }}" }
